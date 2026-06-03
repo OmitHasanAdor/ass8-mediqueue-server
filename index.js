@@ -1,3 +1,5 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -5,13 +7,11 @@ const app = express();
 // Adds headers: Access-Control-Allow-Origin: *
 app.use(cors());
 app.use(express.json())
-const dotenv = require('dotenv');
 const { MongoClient, ServerApiVersion } = require('mongodb');
-dotenv.config();
 
-const uri = process.env.MONGO_URI;
+const uri = process.env.MONGO_DB_URI;
 
-const port = process.env.PORT
+const port = process.env.PORT || 5000;
 
 const client = new MongoClient(uri, {
     serverApi: {
