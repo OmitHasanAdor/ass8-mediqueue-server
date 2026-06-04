@@ -28,15 +28,21 @@ const run = async () => {
         const tutorsCollection = db.collection("tutors");
         const bookingsCollection = db.collection("bookings");
 
-        app.get('/tutor', async (req, res) => {
+        app.get('/tutors', async (req, res) => {
             const result = await tutorsCollection.find().toArray()
             // console.log(result)
+            res.send(result)
+        })
+        app.post('/tutors', async (req, res) => {
+            const tutorData = await req.body;
+            const result = await tutorsCollection.insertOne(tutorData)
+            // console.log('reslt', result)
             res.send(result)
         })
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
-      
+
         // await client.close();
     }
 }
