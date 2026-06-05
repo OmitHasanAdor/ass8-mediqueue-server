@@ -33,6 +33,11 @@ const run = async () => {
             // console.log(result)
             res.send(result)
         })
+        app.get('/available-tutors', async (req, res) => {
+            const result = await tutorsCollection.find().limit(6).toArray()
+            // console.log(result)
+            res.send(result)
+        })
         app.post('/tutors', async (req, res) => {
             const tutorData = await req.body;
             const result = await tutorsCollection.insertOne(tutorData)
