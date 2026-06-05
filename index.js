@@ -7,7 +7,7 @@ const app = express();
 // Adds headers: Access-Control-Allow-Origin: *
 app.use(cors());
 app.use(express.json())
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const uri = process.env.MONGO_DB_URI;
 
@@ -38,6 +38,11 @@ const run = async () => {
             // console.log(result)
             res.send(result)
         })
+          app.get('/tutors/:id', async (req, res) => {
+            const { id } = req.params;
+           const result = await tutorsCollection.findOne({ _id: new ObjectId(id) });
+            res.send(result);
+        });
         app.post('/tutors', async (req, res) => {
             const tutorData = await req.body;
             const result = await tutorsCollection.insertOne(tutorData)
