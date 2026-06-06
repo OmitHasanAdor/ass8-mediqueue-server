@@ -38,17 +38,48 @@ const run = async () => {
             // console.log(result)
             res.send(result)
         })
-          app.get('/tutors/:id', async (req, res) => {
+        app.get('/tutors/:id', async (req, res) => {
             const { id } = req.params;
-           const result = await tutorsCollection.findOne({ _id: new ObjectId(id) });
+            const result = await tutorsCollection.findOne({ _id: new ObjectId(id) });
+            //    console.log('result', result)
             res.send(result);
         });
         app.post('/tutors', async (req, res) => {
             const tutorData = await req.body;
+            tutorData.totalSlot = Number(tutorData.totalSlot);
             const result = await tutorsCollection.insertOne(tutorData)
-            // console.log('reslt', result)
             res.send(result)
         })
+        app.post('/bookings', async (req, res) => {
+            try {
+
+                console.log(req.body);
+
+                const bookingData = req.body;
+                
+                const result = await bookingsCollection.insertOne(bookingData);
+
+                await tutorsCollection.updateOne(
+                    {
+                        _id: new ObjectId(bookingData.tutorId),
+                    },
+                    {
+                        $inc: {
+                            totalSlot: -1,
+                        },
+                    }
+                );
+
+                res.send(result);
+
+            } catch (error) {
+
+                console.log("BOOKING ERROR:", error);
+
+                res.status(500).send(error.message);
+            }
+        });
+
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
