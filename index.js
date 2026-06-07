@@ -67,6 +67,29 @@ const run = async () => {
             const result = await tutorsCollection.insertOne(tutorData)
             res.send(result)
         })
+
+        app.delete('/bookings/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+
+
+                if (!ObjectId.isValid(id)) {
+                    return res.status(400).send({ message: "Invalid ID format" });
+                }
+
+                const query = { _id: new ObjectId(id) };
+                const result = await bookingsCollection.deleteOne(query);
+
+                if (result.deletedCount === 1) {
+                    res.status(200).send({ success: true, message: "Successfully deleted one document." });
+                } else {
+                    res.status(404).send({ success: false, message: "No document matches the provided ID." });
+                }
+            } catch (error) {
+                console.error("Backend Delete Error:", error);
+                res.status(500).send({ message: "Internal Server Error" });
+            }
+        });
         app.patch("/bookings/:id", async (req, res) => {
             const id = req.params.id;
 
@@ -81,6 +104,21 @@ const run = async () => {
 
             res.send(result);
         });
+
+
+        app.patch('/my-tutors/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedData = req.body;
+
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: updatedData
+            };
+
+            const result = await tutorsCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
+
         app.post('/bookings', async (req, res) => {
             try {
 
