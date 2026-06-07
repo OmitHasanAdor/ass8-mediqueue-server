@@ -50,18 +50,15 @@ const run = async () => {
             const result = await tutorsCollection
                 .find({ tutorEmail: email })
                 .toArray();
-
             res.send(result);
         });
         app.get("/my-booked-sessions", async (req, res) => {
             const email = req.query.email;
-
             const result = await bookingsCollection
                 .find({
                     bookedByEmail: email,
                 })
                 .toArray();
-
             res.send(result);
         });
         app.post('/tutors', async (req, res) => {
@@ -70,15 +67,26 @@ const run = async () => {
             const result = await tutorsCollection.insertOne(tutorData)
             res.send(result)
         })
+        app.patch("/bookings/:id", async (req, res) => {
+            const id = req.params.id;
+
+            const result = await bookingsCollection.updateOne(
+                { _id: new ObjectId(id) },
+                {
+                    $set: {
+                        status: "cancelled",
+                    },
+                }
+            );
+
+            res.send(result);
+        });
         app.post('/bookings', async (req, res) => {
             try {
 
                 console.log(req.body);
-
                 const bookingData = req.body;
-
                 const result = await bookingsCollection.insertOne(bookingData);
-
                 await tutorsCollection.updateOne(
                     {
                         _id: new ObjectId(bookingData.tutorId),
@@ -89,13 +97,10 @@ const run = async () => {
                         },
                     }
                 );
-
                 res.send(result);
 
             } catch (error) {
-
                 console.log("BOOKING ERROR:", error);
-
                 res.status(500).send(error.message);
             }
         });
