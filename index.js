@@ -44,6 +44,26 @@ const run = async () => {
             //    console.log('result', result)
             res.send(result);
         });
+        app.get("/my-tutors", async (req, res) => {
+            const email = req.query.email;
+
+            const result = await tutorsCollection
+                .find({ tutorEmail: email })
+                .toArray();
+
+            res.send(result);
+        });
+        app.get("/my-booked-sessions", async (req, res) => {
+            const email = req.query.email;
+
+            const result = await bookingsCollection
+                .find({
+                    bookedByEmail: email,
+                })
+                .toArray();
+
+            res.send(result);
+        });
         app.post('/tutors', async (req, res) => {
             const tutorData = await req.body;
             tutorData.totalSlot = Number(tutorData.totalSlot);
@@ -56,7 +76,7 @@ const run = async () => {
                 console.log(req.body);
 
                 const bookingData = req.body;
-                
+
                 const result = await bookingsCollection.insertOne(bookingData);
 
                 await tutorsCollection.updateOne(
