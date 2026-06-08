@@ -28,11 +28,31 @@ const run = async () => {
         const tutorsCollection = db.collection("tutors");
         const bookingsCollection = db.collection("bookings");
 
-        app.get('/tutors', async (req, res) => {
-            const result = await tutorsCollection.find().toArray()
-            // console.log(result)
-            res.send(result)
-        })
+
+        app.get("/tutors", async (req, res) => {
+            try {
+                const { search, startDate, endDate } = req.query;
+                let query = {};
+                if (search) {
+                    query.tutorName = { $regex: search, $options: "i" };
+                }
+                if (startDate || endDate) {
+                    query.sessionStartDate = {};
+                    if (startDate) {
+                        query.sessionStartDate.$gte = new Date(`${startDate}T00:00:00.000Z`);
+                    }
+                    if (endDate) {
+                        query.sessionStartDate.$lte = new Date(`${endDate}T23:59:59.999Z`);
+                    }
+                }
+                const result = await tutorsCollection.find(query).toArray();
+                res.send(result);
+
+            } catch (error) {
+                console.error("Error fetching filtered tutors:", error);
+                res.status(500).send({ message: "Internal Server Error" });
+            }
+        });
         app.get('/available-tutors', async (req, res) => {
             const result = await tutorsCollection.find().limit(6).toArray()
             // console.log(result)
@@ -48,45 +68,48 @@ const run = async () => {
             const email = req.query.email;
 
             const result = await tutorsCollection
-                .find({ tutorEmail: email })
+                .find({ userEmail: email })
                 .toArray();
+            // console.log(result)
             res.send(result);
         });
         app.get("/my-booked-sessions", async (req, res) => {
             const email = req.query.email;
+
+
             const result = await bookingsCollection
                 .find({
-                    bookedByEmail: email,
+                    userEmail: email,
                 })
                 .toArray();
+
             res.send(result);
         });
         app.post('/tutors', async (req, res) => {
             const tutorData = await req.body;
             tutorData.totalSlot = Number(tutorData.totalSlot);
+            tutorData.sessionStartDate = new Date(tutorData.sessionStartDate);
             const result = await tutorsCollection.insertOne(tutorData)
+            // console.log(result)
             res.send(result)
         })
 
-        app.delete('/bookings/:id', async (req, res) => {
+        app.delete('/tutors/:id', async (req, res) => {
             try {
                 const id = req.params.id;
-
-
                 if (!ObjectId.isValid(id)) {
                     return res.status(400).send({ message: "Invalid ID format" });
                 }
-
                 const query = { _id: new ObjectId(id) };
-                const result = await bookingsCollection.deleteOne(query);
+                const result = await tutorsCollection.deleteOne(query);
 
                 if (result.deletedCount === 1) {
-                    res.status(200).send({ success: true, message: "Successfully deleted one document." });
+                    res.status(200).send({ success: true, message: "Successfully deleted one tutor." });
                 } else {
-                    res.status(404).send({ success: false, message: "No document matches the provided ID." });
+                    res.status(404).send({ success: false, message: "No tutor matches the provided ID." });
                 }
             } catch (error) {
-                console.error("Backend Delete Error:", error);
+                console.error("Backend Tutor Delete Error:", error);
                 res.status(500).send({ message: "Internal Server Error" });
             }
         });
@@ -101,7 +124,7 @@ const run = async () => {
                     },
                 }
             );
-
+            // console.log(result)
             res.send(result);
         });
 
@@ -116,9 +139,9 @@ const run = async () => {
             };
 
             const result = await tutorsCollection.updateOne(filter, updateDoc);
+            // console.log(result)
             res.send(result);
         });
-
         app.post('/bookings', async (req, res) => {
             try {
 
