@@ -55,6 +55,7 @@ const run = async () => {
         const db = client.db("mediqueue-db");
         const tutorsCollection = db.collection("tutors");
         const bookingsCollection = db.collection("bookings");
+        const usersCollection = db.collection("user"); 
 
 
         app.get("/tutors", async (req, res) => {
@@ -193,6 +194,51 @@ const run = async () => {
                 res.status(500).send(error.message);
             }
         });
+
+        app.get("/users", verifyToken, async (req, res) => {
+  try {
+    const result = await usersCollection.find({}).toArray();
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+app.patch("/users/:id/role", verifyToken, async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!["student", "tutor", "admin"].includes(role)) {
+      return res.status(400).send({ message: "Invalid role" });
+    }
+    const result = await usersCollection.updateOne(
+      { _id: req.params.id },
+      { $set: { role } }
+    );
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+app.get("/all-bookings", verifyToken, async (req, res) => {
+  try {
+    const result = await bookingsCollection.find({}).sort({ _id: -1 }).toArray();
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+app.delete("/bookings/:id", verifyToken, async (req, res) => {
+  try {
+    const result = await bookingsCollection.deleteOne({
+      _id: new ObjectId(req.params.id),
+    });
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
 
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
