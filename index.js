@@ -23,26 +23,26 @@ const client = new MongoClient(uri, {
 });
 
 
- const JWKS = createRemoteJWKSet(
-      new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
-    );
+const JWKS = createRemoteJWKSet(
+    new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
+);
 
 const verifyToken = async (req, res, next) => {
     const authHeader = req?.headers.authorization
     console.log('authHeader', authHeader)
     // console.log('token', token)
     if (!authHeader) {
-      return  res.status(401).send({ message: 'Unauthorized' })
+        return res.status(401).send({ message: 'Unauthorized' })
     }
-    const token =authHeader.split(' ')[1]
+    const token = authHeader.split(' ')[1]
     if (!token) {
-         return res.status(401).send({ message: 'Unauthorized' })
+        return res.status(401).send({ message: 'Unauthorized' })
     }
 
     try {
-          const { payload } = await jwtVerify(token, JWKS)
-          console.log('payload', payload)
-          next()
+        const { payload } = await jwtVerify(token, JWKS)
+        console.log('payload', payload)
+        next()
     } catch (error) {
         return res.status(401).send({ message: 'Unauthorized' })
     }
@@ -55,7 +55,7 @@ const run = async () => {
         const db = client.db("mediqueue-db");
         const tutorsCollection = db.collection("tutors");
         const bookingsCollection = db.collection("bookings");
-        const usersCollection = db.collection("user"); 
+        const usersCollection = db.collection("user");
 
 
         app.get("/tutors", async (req, res) => {
@@ -87,13 +87,13 @@ const run = async () => {
             // console.log(result)
             res.send(result)
         })
-        app.get('/tutors/:id',verifyToken, async (req, res) => {
+        app.get('/tutors/:id', verifyToken, async (req, res) => {
             const { id } = req.params;
             const result = await tutorsCollection.findOne({ _id: new ObjectId(id) });
             //    console.log('result', result)
             res.send(result);
         });
-        app.get("/my-tutors",verifyToken, async (req, res) => {
+        app.get("/my-tutors", verifyToken, async (req, res) => {
             const email = req.query.email;
 
             const result = await tutorsCollection
@@ -102,7 +102,7 @@ const run = async () => {
             // console.log(result)
             res.send(result);
         });
-        app.get("/my-booked-sessions",verifyToken, async (req, res) => {
+        app.get("/my-booked-sessions", verifyToken, async (req, res) => {
             const email = req.query.email;
 
 
@@ -114,7 +114,7 @@ const run = async () => {
 
             res.send(result);
         });
-        app.post('/tutors',verifyToken, async (req, res) => {
+        app.post('/tutors', verifyToken, async (req, res) => {
             const tutorData = await req.body;
             tutorData.totalSlot = Number(tutorData.totalSlot);
             tutorData.sessionStartDate = new Date(tutorData.sessionStartDate);
@@ -171,7 +171,7 @@ const run = async () => {
             // console.log(result)
             res.send(result);
         });
-        app.post('/bookings',verifyToken, async (req, res) => {
+        app.post('/bookings', verifyToken, async (req, res) => {
             try {
 
                 console.log(req.body);
@@ -196,49 +196,73 @@ const run = async () => {
         });
 
         app.get("/users", verifyToken, async (req, res) => {
-  try {
-    const result = await usersCollection.find({}).toArray();
-    res.send(result);
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-});
+            try {
+                const result = await usersCollection.find({}).toArray();
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ message: error.message });
+            }
+        });
 
-app.patch("/users/:id/role", verifyToken, async (req, res) => {
-  try {
-    const { role } = req.body;
-    if (!["student", "tutor", "admin"].includes(role)) {
-      return res.status(400).send({ message: "Invalid role" });
-    }
-    const result = await usersCollection.updateOne(
-      { _id: req.params.id },
-      { $set: { role } }
-    );
-    res.send(result);
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-});
+        app.patch("/users/:id/role", verifyToken, async (req, res) => {
+            try {
+                const { role } = req.body;
+                if (!["student", "tutor", "admin"].includes(role)) {
+                    return res.status(400).send({ message: "Invalid role" });
+                }
+                const result = await usersCollection.updateOne(
+                    { _id: req.params.id },
+                    { $set: { role } }
+                );
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ message: error.message });
+            }
+        });
 
-app.get("/all-bookings", verifyToken, async (req, res) => {
-  try {
-    const result = await bookingsCollection.find({}).sort({ _id: -1 }).toArray();
-    res.send(result);
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-});
+        app.get("/all-bookings", verifyToken, async (req, res) => {
+            try {
+                const result = await bookingsCollection.find({}).sort({ _id: -1 }).toArray();
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ message: error.message });
+            }
+        });
 
-app.delete("/bookings/:id", verifyToken, async (req, res) => {
-  try {
-    const result = await bookingsCollection.deleteOne({
-      _id: new ObjectId(req.params.id),
-    });
-    res.send(result);
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-});
+        app.delete("/bookings/:id", verifyToken, async (req, res) => {
+            try {
+                const result = await bookingsCollection.deleteOne({
+                    _id: new ObjectId(req.params.id),
+                });
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ message: error.message });
+            }
+        });
+
+        app.get("/admin/stats", verifyToken, async (req, res) => {
+            try {
+                const totalUsers = await usersCollection.countDocuments();
+                const totalTutors = await tutorsCollection.countDocuments();
+                const totalBookings = await bookingsCollection.countDocuments();
+                const paidBookings = await bookingsCollection.countDocuments({
+                    status: "paid",
+                });
+                const cancelledBookings = await bookingsCollection.countDocuments({
+                    status: "cancelled",
+                });
+
+                res.send({
+                    totalUsers,
+                    totalTutors,
+                    totalBookings,
+                    paidBookings,
+                    cancelledBookings,
+                });
+            } catch (error) {
+                res.status(500).send({ message: error.message });
+            }
+        });
 
 
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
