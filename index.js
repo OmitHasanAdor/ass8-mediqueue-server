@@ -102,19 +102,7 @@ const run = async () => {
             // console.log(result)
             res.send(result);
         });
-        app.get("/my-booked-sessions", verifyToken, async (req, res) => {
-            const email = req.query.email;
-
-
-            const result = await bookingsCollection
-                .find({
-                    userEmail: email,
-                })
-                .toArray();
-
-            res.send(result);
-        });
-        app.post('/tutors', verifyToken, async (req, res) => {
+         app.post('/tutors', verifyToken, async (req, res) => {
             const tutorData = await req.body;
             tutorData.totalSlot = Number(tutorData.totalSlot);
             tutorData.sessionStartDate = new Date(tutorData.sessionStartDate);
@@ -122,6 +110,8 @@ const run = async () => {
             // console.log(result)
             res.send(result)
         })
+     
+       
 
         app.delete('/tutors/:id', async (req, res) => {
             try {
@@ -193,6 +183,18 @@ const run = async () => {
                 console.log("BOOKING ERROR:", error);
                 res.status(500).send(error.message);
             }
+        });
+           app.get("/my-booked-sessions", verifyToken, async (req, res) => {
+            const email = req.query.email;
+
+
+            const result = await bookingsCollection
+                .find({
+                    userEmail: email,
+                })
+                .toArray();
+
+            res.send(result);
         });
 
         app.get("/users", verifyToken, async (req, res) => {
